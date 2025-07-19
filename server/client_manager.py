@@ -1,3 +1,4 @@
+import socket
 import threading
 from protocol import HEADER, FORMAT, DISCONNECT_MESSAGE
 
@@ -55,6 +56,7 @@ def stream_audio_to_client(conn, addr, audio_handler):
     try:
         print(f"[AUDIO] Starting stream to {addr}")
         
+        chunk_count = 0
         while audio_handler.has_more_chunks():
             chunk = audio_handler.get_next_chunk()
             if chunk is None:
@@ -62,8 +64,12 @@ def stream_audio_to_client(conn, addr, audio_handler):
                 
             # Envia o chunk diretamente (dados binários)
             conn.send(chunk)
+            chunk_count += 1
             
-        print(f"[AUDIO] Finished streaming to {addr}")
+        print(f"[AUDIO] Finished streaming {chunk_count} chunks to {addr}")
+        
+        # Sinaliza fim do stream fechando a conexão de envio
+        conn.shutdown(socket.SHUT_WR)
         
     except Exception as e:
         print(f"[AUDIO ERROR] Error streaming to {addr}: {e}")
